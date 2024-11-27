@@ -13,10 +13,26 @@ function wpkanban_activate() {
         wp_die(__('O plugin WPKanban requer o JetEngine ativo para funcionar.', 'wpkanban'));
     }
 
-    // Registra o CPT e taxonomia para poder criar os termos
+    // Registra o CPT e taxonomias para poder criar os termos
     wpkanban_register_leads_post_type();
     wpkanban_register_etapas_taxonomy();
+    wpkanban_register_interesse_taxonomy();
     
+    // Cria as etapas padrão
+    wpkanban_create_default_etapas();
+    
+    // Cria os interesses padrão
+    wpkanban_create_default_interesses();
+    
+    // Configurar opções padrão
+    add_option('wpkanban_refresh_interval', 20);
+    
+    // Limpa o cache de rewrite rules
+    flush_rewrite_rules();
+}
+
+// Função para criar etapas padrão
+function wpkanban_create_default_etapas() {
     // Etapas padrão
     $etapas = array(
         'aguardando' => array(
@@ -57,10 +73,35 @@ function wpkanban_activate() {
             }
         }
     }
-    
-    // Configurar opções padrão
-    add_option('wpkanban_refresh_interval', 20);
-    
-    // Limpa o cache de rewrite rules
-    flush_rewrite_rules();
+}
+
+// Função para criar interesses padrão
+function wpkanban_create_default_interesses() {
+    $interesses = array(
+        'Comprar' => array(
+            'slug' => 'comprar',
+            'description' => 'Interessado em comprar'
+        ),
+        'Vender' => array(
+            'slug' => 'vender',
+            'description' => 'Interessado em vender'
+        ),
+        'Alugar' => array(
+            'slug' => 'alugar',
+            'description' => 'Interessado em alugar'
+        )
+    );
+
+    foreach ($interesses as $name => $args) {
+        if (!term_exists($name, 'interesse')) {
+            wp_insert_term(
+                $name,
+                'interesse',
+                array(
+                    'slug' => $args['slug'],
+                    'description' => $args['description']
+                )
+            );
+        }
+    }
 }

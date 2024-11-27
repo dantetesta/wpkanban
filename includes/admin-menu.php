@@ -10,7 +10,7 @@ function wpkanban_add_admin_menu() {
         'WPKanban',
         'manage_options',
         'wpkanban',
-        'wpkanban_render_main_page',
+        'wpkanban_render_kanban_page',
         'dashicons-schedule',
         30
     );
@@ -23,8 +23,45 @@ function wpkanban_add_admin_menu() {
         'wpkanban-settings',
         'wpkanban_render_settings_page'
     );
+    
+    // Submenu Etapas
+    add_submenu_page(
+        'wpkanban',
+        'Etapas',
+        'Etapas',
+        'manage_options',
+        'edit-tags.php?taxonomy=etapas&post_type=leads'
+    );
+
+    // Submenu Interesses
+    add_submenu_page(
+        'wpkanban',
+        'Interesses',
+        'Interesses',
+        'manage_options',
+        'edit-tags.php?taxonomy=interesse&post_type=leads'
+    );
 }
 add_action('admin_menu', 'wpkanban_add_admin_menu');
+
+// Remove o submenu duplicado
+function wpkanban_remove_duplicate_submenu() {
+    remove_submenu_page('edit.php?post_type=leads', 'edit-tags.php?taxonomy=etapas&amp;post_type=leads');
+    remove_submenu_page('edit.php?post_type=leads', 'edit-tags.php?taxonomy=interesse&amp;post_type=leads');
+}
+add_action('admin_menu', 'wpkanban_remove_duplicate_submenu', 999);
+
+// Ajusta os links do menu quando ativos
+function wpkanban_fix_parent_menu($parent_file) {
+    global $current_screen;
+    
+    if ($current_screen->taxonomy == 'etapas' || $current_screen->taxonomy == 'interesse') {
+        $parent_file = 'wpkanban';
+    }
+    
+    return $parent_file;
+}
+add_filter('parent_file', 'wpkanban_fix_parent_menu');
 
 // Registrar configurações
 function wpkanban_register_settings() {
@@ -57,7 +94,7 @@ function wpkanban_admin_enqueue_scripts($hook) {
 add_action('admin_enqueue_scripts', 'wpkanban_admin_enqueue_scripts');
 
 // Renderizar página principal
-function wpkanban_render_main_page() {
+function wpkanban_render_kanban_page() {
     if (!current_user_can('manage_options')) {
         return;
     }

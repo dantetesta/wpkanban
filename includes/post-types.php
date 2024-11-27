@@ -78,6 +78,34 @@ function wpkanban_register_etapas_taxonomy() {
 }
 add_action('init', 'wpkanban_register_etapas_taxonomy');
 
+// Registra a taxonomia Interesse
+function wpkanban_register_interesse_taxonomy() {
+    $labels = array(
+        'name'              => 'Interesses',
+        'singular_name'     => 'Interesse',
+        'search_items'      => 'Buscar Interesses',
+        'all_items'         => 'Todos os Interesses',
+        'edit_item'         => 'Editar Interesse',
+        'update_item'       => 'Atualizar Interesse',
+        'add_new_item'      => 'Adicionar Novo Interesse',
+        'new_item_name'     => 'Novo Interesse',
+        'menu_name'         => 'Interesses'
+    );
+
+    $args = array(
+        'hierarchical'      => true,
+        'labels'            => $labels,
+        'show_ui'           => true,
+        'show_admin_column' => true,
+        'query_var'         => true,
+        'rewrite'           => array('slug' => 'interesse'),
+        'show_in_menu'      => false
+    );
+
+    register_taxonomy('interesse', array('leads'), $args);
+}
+add_action('init', 'wpkanban_register_interesse_taxonomy');
+
 // Removendo a função customizada do meta box
 remove_filter('add_meta_boxes', 'wpkanban_etapas_meta_box');
 
@@ -88,16 +116,6 @@ function wpkanban_add_lead_meta_boxes() {
         'wpkanban_lead_info',
         'Informações do Lead',
         'wpkanban_lead_info_callback',
-        'leads',
-        'normal',
-        'high'
-    );
-
-    // Meta box para interesse
-    add_meta_box(
-        'wpkanban_interesse',
-        'Interesse',
-        'wpkanban_interesse_meta_box_callback',
         'leads',
         'normal',
         'high'
@@ -146,32 +164,6 @@ function wpkanban_lead_info_callback($post) {
     <?php
 }
 
-// Callback para o meta box de interesse
-function wpkanban_interesse_meta_box_callback($post) {
-    wp_nonce_field('wpkanban_save_lead_meta', 'wpkanban_lead_meta_nonce');
-    
-    // Busca o valor salvo
-    $interesse = get_post_meta($post->ID, 'interesse', true);
-    
-    // Define as opções disponíveis
-    $opcoes = array(
-        '' => 'Selecione...',
-        'Comprar' => 'Comprar',
-        'Vender' => 'Vender',
-        'Alugar' => 'Alugar'
-    );
-    
-    ?>
-    <select name="interesse" id="interesse" style="width: 100%">
-        <?php foreach ($opcoes as $valor => $label) : ?>
-            <option value="<?php echo esc_attr($valor); ?>" <?php selected($interesse, $valor); ?>>
-                <?php echo esc_html($label); ?>
-            </option>
-        <?php endforeach; ?>
-    </select>
-    <?php
-}
-
 // Callback para o meta box de anotações
 function wpkanban_anotacoes_callback($post) {
     $anotacoes = get_post_meta($post->ID, 'anotacoes', true);
@@ -211,7 +203,6 @@ function wpkanban_save_lead_meta($post_id) {
         'nome' => 'sanitize_text_field',
         'email' => 'sanitize_email',
         'whatsapp' => 'sanitize_text_field',
-        'interesse' => 'sanitize_text_field',
         'anotacoes' => 'wp_kses_post'
     );
 
