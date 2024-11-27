@@ -60,7 +60,6 @@ function wpkanban_activate() {
     
     // Configurar opções padrão
     add_option('wpkanban_refresh_interval', 20);
-    add_option('wpkanban_initial_stage', 'aguardando');
     
     // Limpa o cache de rewrite rules
     flush_rewrite_rules();

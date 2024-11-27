@@ -35,12 +35,6 @@ function wpkanban_register_settings() {
             return max(5, min(300, intval($value)));
         }
     ));
-    
-    register_setting('wpkanban_settings', 'wpkanban_initial_stage', array(
-        'type' => 'string',
-        'default' => '',
-        'sanitize_callback' => 'sanitize_text_field'
-    ));
 }
 add_action('admin_init', 'wpkanban_register_settings');
 
@@ -113,10 +107,9 @@ function wpkanban_render_settings_page() {
     });
     
     $refresh_interval = get_option('wpkanban_refresh_interval', 20);
-    $initial_stage = get_option('wpkanban_initial_stage', '');
-    
     ?>
     <div class="wrap">
+        
         <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
         
         <form action="options.php" method="post">
@@ -142,28 +135,6 @@ function wpkanban_render_settings_page() {
                                step="1" />
                         <p class="description">
                             Intervalo de atualização automática das listas (mínimo: 5s, máximo: 300s)
-                        </p>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row">
-                        <label for="wpkanban_initial_stage">
-                            Etapa Inicial do Funil
-                        </label>
-                    </th>
-                    <td>
-                        <select id="wpkanban_initial_stage" 
-                                name="wpkanban_initial_stage">
-                            <option value="">Selecione uma etapa</option>
-                            <?php foreach ($etapas as $etapa) : ?>
-                                <option value="<?php echo esc_attr($etapa->slug); ?>" 
-                                    <?php selected($initial_stage, $etapa->slug); ?>>
-                                    <?php echo esc_html($etapa->name); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <p class="description">
-                            Selecione qual etapa será monitorada para novos leads
                         </p>
                     </td>
                 </tr>
