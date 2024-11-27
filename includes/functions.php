@@ -185,9 +185,9 @@ function wpkanban_render_edit_modal() {
                         <label for="edit-lead-interesse">Interesse</label>
                         <select id="edit-lead-interesse" name="interesse" required>
                             <option value="">Selecione...</option>
-                            <option value="comprar">Comprar</option>
-                            <option value="vender">Vender</option>
-                            <option value="alugar">Alugar</option>
+                            <option value="Comprar">Comprar</option>
+                            <option value="Vender">Vender</option>
+                            <option value="Alugar">Alugar</option>
                         </select>
                     </div>
                     

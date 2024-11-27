@@ -63,7 +63,6 @@ function wpkanban_register_etapas_taxonomy() {
         'show_admin_column' => true,
         'query_var'         => true,
         'rewrite'           => array('slug' => 'etapa'),
-        'meta_box_cb'       => 'wpkanban_etapas_meta_box',
         'show_in_rest'      => true
     );
 
@@ -79,32 +78,8 @@ function wpkanban_register_etapas_taxonomy() {
 }
 add_action('init', 'wpkanban_register_etapas_taxonomy');
 
-// Custom meta box para etapas que mostra a ordem
-function wpkanban_etapas_meta_box($post, $box) {
-    $taxonomy = $box['args']['taxonomy'];
-    $terms = get_terms(array(
-        'taxonomy' => $taxonomy,
-        'hide_empty' => false,
-        'orderby' => 'meta_value_num',
-        'meta_key' => 'order'
-    ));
-    
-    $post_terms = get_the_terms($post->ID, $taxonomy);
-    $current = $post_terms ? array_pop($post_terms) : false;
-    $current = $current ? $current->term_id : 0;
-    ?>
-    <div id="taxonomy-<?php echo $taxonomy; ?>" class="categorydiv">
-        <select name="tax_input[<?php echo $taxonomy; ?>][]">
-            <option value=""><?php _e('Selecione a etapa...', 'wpkanban'); ?></option>
-            <?php foreach ($terms as $term): ?>
-                <option value="<?php echo $term->term_id; ?>" <?php selected($current, $term->term_id); ?>>
-                    <?php echo esc_html($term->name); ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-    </div>
-    <?php
-}
+// Removendo a função customizada do meta box
+remove_filter('add_meta_boxes', 'wpkanban_etapas_meta_box');
 
 // Adiciona os meta boxes dos campos
 function wpkanban_add_lead_meta_boxes() {
@@ -173,13 +148,26 @@ function wpkanban_lead_info_callback($post) {
 
 // Callback para o meta box de interesse
 function wpkanban_interesse_meta_box_callback($post) {
+    wp_nonce_field('wpkanban_save_lead_meta', 'wpkanban_lead_meta_nonce');
+    
+    // Busca o valor salvo
     $interesse = get_post_meta($post->ID, 'interesse', true);
+    
+    // Define as opções disponíveis
+    $opcoes = array(
+        '' => 'Selecione...',
+        'Comprar' => 'Comprar',
+        'Vender' => 'Vender',
+        'Alugar' => 'Alugar'
+    );
+    
     ?>
-    <select name="interesse" style="width: 100%">
-        <option value="">Selecione...</option>
-        <option value="Comprar" <?php selected($interesse, 'Comprar'); ?>>Comprar</option>
-        <option value="Vender" <?php selected($interesse, 'Vender'); ?>>Vender</option>
-        <option value="Alugar" <?php selected($interesse, 'Alugar'); ?>>Alugar</option>
+    <select name="interesse" id="interesse" style="width: 100%">
+        <?php foreach ($opcoes as $valor => $label) : ?>
+            <option value="<?php echo esc_attr($valor); ?>" <?php selected($interesse, $valor); ?>>
+                <?php echo esc_html($label); ?>
+            </option>
+        <?php endforeach; ?>
     </select>
     <?php
 }
