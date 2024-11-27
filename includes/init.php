@@ -102,9 +102,26 @@ function wpkanban_render_board() {
     // Buscar etapas
     $etapas = get_terms(array(
         'taxonomy' => 'etapas',
-        'hide_empty' => false,
-        'orderby' => 'term_order'
+        'hide_empty' => false
     ));
+    
+    // Ordena as etapas pelo meta 'order', mantendo as sem ordem no final
+    usort($etapas, function($a, $b) {
+        $order_a = get_term_meta($a->term_id, 'order', true);
+        $order_b = get_term_meta($b->term_id, 'order', true);
+        
+        // Se ambos têm ordem, compara normalmente
+        if ($order_a !== '' && $order_b !== '') {
+            return intval($order_a) - intval($order_b);
+        }
+        
+        // Se apenas um tem ordem, ele vem primeiro
+        if ($order_a !== '') return -1;
+        if ($order_b !== '') return 1;
+        
+        // Se nenhum tem ordem, mantém a ordem alfabética
+        return strcmp($a->name, $b->name);
+    });
     
     // Se tiver etapa inicial configurada, reordenar array
     if (!empty($initial_stage_slug)) {
