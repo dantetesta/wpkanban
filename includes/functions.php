@@ -183,11 +183,19 @@ function wpkanban_render_edit_modal() {
                     
                     <div class="form-row">
                         <label for="edit-lead-interesse">Interesse</label>
+                        <?php 
+                        $terms = get_terms(array(
+                            'taxonomy' => 'interesse',
+                            'hide_empty' => false,
+                        ));
+                        ?>
                         <select id="edit-lead-interesse" name="interesse" required>
                             <option value="">Selecione...</option>
-                            <option value="Comprar">Comprar</option>
-                            <option value="Vender">Vender</option>
-                            <option value="Alugar">Alugar</option>
+                            <?php foreach ($terms as $term) : ?>
+                                <option value="<?php echo esc_attr($term->slug); ?>">
+                                    <?php echo esc_html($term->name); ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                     
