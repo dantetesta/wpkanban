@@ -1,0 +1,552 @@
+/* Modal */
+.wpkanban-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.wpkanban-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+}
+
+.wpkanban-modal .modal-content {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow: hidden;
+    position: relative;
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+}
+
+.wpkanban-modal.active .modal-content {
+    transform: translateY(0);
+}
+
+.wpkanban-modal .modal-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid #e5e5e5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.wpkanban-modal .modal-header h2 {
+    margin: 0;
+    font-size: 1.5em;
+    color: #333;
+}
+
+.wpkanban-modal .modal-close {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    color: #666;
+    transition: color 0.2s ease;
+}
+
+.wpkanban-modal .modal-close:hover {
+    color: #333;
+}
+
+.wpkanban-modal .modal-body {
+    padding: 24px;
+    max-height: calc(90vh - 130px);
+    overflow-y: auto;
+    position: relative;
+}
+
+.wpkanban-modal .modal-body.loading::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wpkanban-modal .modal-body.loading::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    margin: -15px 0 0 -15px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #2271b1;
+    border-radius: 50%;
+    z-index: 1;
+    animation: spin 1s linear infinite;
+}
+
+.wpkanban-modal .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e5e5e5;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+/* Column Content */
+.column-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    min-height: 100px;
+    position: relative;
+}
+
+/* Loading More */
+.loading-more {
+    text-align: center;
+    padding: 12px;
+    font-size: 14px;
+    color: #666;
+    display: none;
+}
+
+.column-content[data-loading="true"] .loading-more {
+    display: block;
+}
+
+.loading-more::after {
+    content: "";
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-left: 8px;
+    border: 2px solid #ddd;
+    border-top-color: #2271b1;
+    border-radius: 50%;
+    animation: loading-spin 1s linear infinite;
+}
+
+@keyframes loading-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Form Styles */
+.form-row {
+    margin-bottom: 16px;
+}
+
+.form-row label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-weight: 500;
+}
+
+.form-row input[type="text"],
+.form-row input[type="email"],
+.form-row textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.form-row input[type="text"]:focus,
+.form-row input[type="email"]:focus,
+.form-row textarea:focus {
+    outline: none;
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.form-row-2-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+/* Buttons */
+.btn-save,
+.btn-cancel {
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-save {
+    background-color: #2271b1;
+    color: #fff;
+    border: none;
+}
+
+.btn-save:hover {
+    background-color: #135e96;
+}
+
+.btn-save:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.btn-cancel {
+    background-color: #f0f0f1;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+.btn-cancel:hover {
+    background-color: #e5e5e5;
+}
+
+/* Switch */
+.switch-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.switch-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 20px;
+}
+
+.switch-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .switch-slider {
+    background-color: #2271b1;
+}
+
+input:checked + .switch-slider:before {
+    transform: translateX(20px);
+}
+
+.switch-label-text {
+    font-size: 14px;
+    color: #333;
+}
+
+/* Board */
+.wpkanban-board {
+    display: flex;
+    gap: 24px;
+    padding: 24px;
+    min-height: calc(100vh - 200px);
+    overflow-x: auto;
+}
+
+/* Column */
+.wpkanban-column {
+    flex: 0 0 300px;
+    display: flex;
+    flex-direction: column;
+    background: #f0f0f1;
+    border-radius: 8px;
+    max-height: calc(100vh - 250px);
+}
+
+.column-header {
+    padding: 16px;
+    background: #fff;
+    border-radius: 8px 8px 0 0;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.column-header h2 {
+    margin: 0;
+    font-size: 1.1em;
+    color: #1d2327;
+}
+
+.lead-count {
+    background: #2271b1;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Lead Card */
+.lead-card {
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+}
+
+.lead-card:hover {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.lead-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: move;
+}
+
+.lead-header h3 {
+    margin: 0;
+    font-size: 1em;
+    color: #1d2327;
+}
+
+.lead-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.lead-actions button {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: #666;
+    transition: color 0.2s ease;
+}
+
+.lead-actions button:hover {
+    color: #2271b1;
+}
+
+.lead-body {
+    padding: 12px 16px;
+}
+
+.lead-body p {
+    margin: 0 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.lead-body p a {
+    text-decoration: none;
+    color: #2271b1;
+}
+
+.lead-body p a:hover {
+    opacity: 0.8;
+}
+
+.lead-body p .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.lead-body p .dashicons-email {
+    color: #2271b1;
+}
+
+.lead-body p .dashicons-whatsapp {
+    color: #25D366;
+}
+
+.lead-body p .dashicons-admin-home {
+    color: #666;
+}
+
+.lead-footer {
+    margin-top: 10px;
+    padding: 8px;
+    border-top: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: #666;
+}
+
+.lead-date,
+.lead-time {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.lead-date .dashicons,
+.lead-time .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    color: #666;
+}
+
+/* Anotações */
+.lead-notes-wrapper {
+    margin-top: 10px;
+    border-top: 1px solid #eee;
+}
+
+.notes-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    transition: color 0.2s;
+}
+
+.notes-toggle:hover {
+    color: #2271b1;
+}
+
+.notes-toggle .dashicons {
+    margin-right: 5px;
+    transition: transform 0.2s ease-in-out;
+}
+
+.lead-notes {
+    padding: 10px;
+    background: #f8f8f8;
+    border-radius: 4px;
+    margin: 0 8px 8px;
+    color: #666;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.lead-notes p {
+    margin: 0 0 10px;
+}
+
+.lead-notes p:last-child {
+    margin-bottom: 0;
+}
+
+/* Drag and Drop */
+.ui-sortable-helper {
+    z-index: 1000 !important;
+}
+
+.is-dragging {
+    opacity: 0.9;
+    transform: scale(1.02);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-placeholder {
+    height: 100px;
+    background-color: rgba(34, 113, 177, 0.1);
+    border: 2px dashed #2271b1;
+    border-radius: 6px;
+    margin-bottom: 12px;
+}
+
+.wpkanban-column.is-receiving {
+    background-color: #f7f7f7;
+}
+
+.lead-card.is-updating {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.lead-card.move-success {
+    animation: card-success 1s ease;
+}
+
+@keyframes card-success {
+    0%, 100% {
+        background-color: #fff;
+    }
+    50% {
+        background-color: rgba(46, 204, 113, 0.1);
+    }
+}
+
+/* Notificações */
+.wpkanban-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 24px;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    font-size: 14px;
+    z-index: 10000;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+}
+
+.wpkanban-notification.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.wpkanban-notification.success {
+    background: #46b450;
+    color: #fff;
+}
+
+.wpkanban-notification.error {
+    background: #dc3232;
+    color: #fff;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
