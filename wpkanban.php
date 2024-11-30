@@ -81,6 +81,7 @@ function wpkanban_enqueue_scripts($hook) {
     wp_localize_script('wpkanban-js', 'wpkanban', array(
         'ajax_url' => admin_url('admin-ajax.php'),
         'nonce' => wp_create_nonce('wpkanban_nonce'),
+        'refresh_interval' => get_option('wpkanban_refresh_interval', 20),
         'strings' => array(
             'lead_moved' => __('Lead movido com sucesso!', 'wpkanban'),
             'error' => __('Erro ao mover o lead.', 'wpkanban'),

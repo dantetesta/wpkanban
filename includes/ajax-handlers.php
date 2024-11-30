@@ -344,24 +344,24 @@ function wpkanban_ajax_delete_lead() {
     check_ajax_referer('wpkanban_nonce', 'nonce');
     
     if (!current_user_can('delete_posts')) {
-        wp_send_json_error('Permissão negada');
+        wp_send_json_error(array('message' => 'Permissão negada'));
     }
     
     $lead_id = isset($_POST['lead_id']) ? intval($_POST['lead_id']) : 0;
     
     if (!$lead_id) {
-        wp_send_json_error('ID do lead inválido');
+        wp_send_json_error(array('message' => 'ID do lead inválido'));
     }
     
     $result = wpkanban_delete_lead($lead_id);
     
     if (!$result) {
-        wp_send_json_error('Erro ao excluir lead');
+        wp_send_json_error(array('message' => 'Erro ao excluir lead'));
     }
     
-    wp_send_json_success('Lead excluído com sucesso');
+    wp_send_json_success(array('message' => 'Lead excluído com sucesso'));
 }
-add_action('wp_ajax_wpkanban_delete_lead', 'wpkanban_ajax_delete_lead');
+add_action('wp_ajax_wpkanban_ajax_delete_lead', 'wpkanban_ajax_delete_lead');
 
 // Atualizar lista Aguardando
 function wpkanban_ajax_refresh_waiting() {
@@ -455,3 +455,22 @@ function wpkanban_load_more_leads_handler() {
     ));
 }
 add_action('wp_ajax_wpkanban_load_more_leads', 'wpkanban_load_more_leads_handler');
+
+// Handler para obter listas atualizadas
+function wpkanban_get_updated_lists_handler() {
+    // Verifica o nonce para segurança
+    check_ajax_referer('wpkanban_nonce', 'nonce');
+
+    // Aqui você deve implementar a lógica para buscar os dados atualizados das listas
+    // Por exemplo, buscar posts ou termos relacionados e formatar em HTML
+    $response = array(
+        'success' => true,
+        'data' => array(
+            'html' => '<div>Dados atualizados das listas</div>' // Substitua pelo HTML real
+        )
+    );
+
+    wp_send_json($response);
+}
+add_action('wp_ajax_wpkanban_get_updated_lists', 'wpkanban_get_updated_lists_handler');
+add_action('wp_ajax_nopriv_wpkanban_get_updated_lists', 'wpkanban_get_updated_lists_handler');

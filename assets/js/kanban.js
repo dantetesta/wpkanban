@@ -7,6 +7,10 @@ jQuery(document).ready(function($) {
     const $modal = $('#edit-lead-modal');
     const $editForm = $('#edit-lead-form');
 
+    // Variáveis globais para controle do timer
+    let refreshTimer;
+    const refreshInterval = wpkanban.refresh_interval || 20000; // 20 segundos padrão
+
     // Inicializar Sortable
     $('.column-content').sortable({
         connectWith: '.column-content',
@@ -34,6 +38,9 @@ jQuery(document).ready(function($) {
                 
                 // Atualizar contadores
                 updateColumnCounters();
+                
+                // Reiniciar o timer após mover o card
+                restartRefreshTimer();
                 
                 // Enviar atualização via AJAX
                 $.ajax({
@@ -157,26 +164,26 @@ jQuery(document).ready(function($) {
                 url: wpkanban.ajax_url,
                 type: 'POST',
                 data: {
-                    action: 'wpkanban_delete_lead',
+                    action: 'wpkanban_ajax_delete_lead',
                     lead_id: leadId,
                     nonce: wpkanban.nonce
                 },
                 success: function(response) {
                     if (response.success) {
-                        $card.slideUp(200, function() {
+                        // Remover card com animação
+                        $card.fadeOut(200, function() {
                             $(this).remove();
-                            updateColumnCounters();
+                            updateColumnCounters(); // Atualizar contadores após excluir
                         });
                         showNotification('success', 'Lead excluído com sucesso');
                     } else {
+                        $card.removeClass('is-loading');
                         showNotification('error', response.data.message || 'Erro ao excluir lead');
                     }
                 },
                 error: function() {
-                    showNotification('error', 'Erro ao excluir lead');
-                },
-                complete: function() {
                     $card.removeClass('is-loading');
+                    showNotification('error', 'Erro ao excluir lead');
                 }
             });
         }
@@ -240,8 +247,10 @@ jQuery(document).ready(function($) {
     // Funções auxiliares
     function updateColumnCounters() {
         $('.wpkanban-column').each(function() {
-            const count = $(this).find('.lead-card').length;
-            $(this).find('.lead-count').text(count);
+            const $column = $(this);
+            const $counter = $column.find('.column-header .lead-count');
+            const count = $column.find('.column-content .lead-card').length;
+            $counter.text(count);
         });
     }
 
@@ -270,8 +279,13 @@ jQuery(document).ready(function($) {
     // Função para atualizar uma coluna específica
     function refreshColumn($column) {
         const stageId = $column.data('stage-id');
+        const $content = $column.find('.column-content');
+        const $existingCards = $content.find('.lead-card');
         
-        return $.ajax({
+        // Mostrar loading na coluna
+        $column.addClass('is-loading');
+        
+        $.ajax({
             url: wpkanban.ajax_url,
             type: 'POST',
             data: {
@@ -281,47 +295,198 @@ jQuery(document).ready(function($) {
             },
             success: function(response) {
                 if (response.success) {
-                    // Atualizar conteúdo da coluna mantendo os cards existentes
-                    const $newCards = $(response.data.html);
-                    const $existingCards = $column.find('.lead-card');
+                    // Criar um container temporário com o novo HTML
+                    const $temp = $('<div>').html(response.data.html);
+                    const $newCards = $temp.find('.lead-card');
                     
-                    // Adicionar novos cards que não existem
-                    $newCards.each(function() {
-                        const leadId = $(this).data('lead-id');
-                        if (!$existingCards.filter(`[data-lead-id="${leadId}"]`).length) {
-                            $(this).hide().prependTo($column.find('.column-content')).slideDown();
-                        }
-                    });
-                    
-                    // Remover cards que não existem mais
+                    // Remover cards que não existem mais com animação
                     $existingCards.each(function() {
                         const leadId = $(this).data('lead-id');
                         if (!$newCards.filter(`[data-lead-id="${leadId}"]`).length) {
-                            $(this).slideUp(function() {
-                                $(this).remove();
+                            const $card = $(this);
+                            $card.fadeOut(200, function() {
+                                $card.remove();
+                                updateColumnCounters();
                             });
                         }
                     });
                     
-                    // Atualizar contador
-                    updateColumnCounters();
+                    // Adicionar novos cards com animação
+                    $newCards.each(function() {
+                        const leadId = $(this).data('lead-id');
+                        if (!$existingCards.filter(`[data-lead-id="${leadId}"]`).length) {
+                            const $card = $(this).clone();
+                            $card.hide().prependTo($content).fadeIn(200, function() {
+                                updateColumnCounters();
+                            });
+                        }
+                    });
+                    
+                    // Reinicializar Sortable
+                    if ($content.hasClass('ui-sortable')) {
+                        $content.sortable('destroy');
+                    }
+                    
+                    $content.sortable({
+                        connectWith: '.column-content',
+                        placeholder: 'card-placeholder',
+                        handle: '.lead-header',
+                        items: '.lead-card',
+                        helper: 'clone',
+                        revert: true,
+                        appendTo: 'body',
+                        zIndex: 1000,
+                        start: function(e, ui) {
+                            ui.placeholder.height(ui.item.height());
+                            $columns.addClass('is-receiving');
+                            ui.item.addClass('is-dragging');
+                        },
+                        stop: function(e, ui) {
+                            $columns.removeClass('is-receiving');
+                            ui.item.removeClass('is-dragging');
+                            updateColumnCounters();
+                        },
+                        receive: function(e, ui) {
+                            updateColumnCounters();
+                        },
+                        update: function(e, ui) {
+                            if (this === ui.item.parent()[0]) {
+                                const $column = $(ui.item).closest('.wpkanban-column');
+                                const leadId = ui.item.data('lead-id');
+                                const stageId = $column.data('stage-id');
+                                
+                                // Atualizar contadores imediatamente
+                                updateColumnCounters();
+                                
+                                // Reiniciar o timer após mover o card
+                                restartRefreshTimer();
+                                
+                                // Enviar atualização via AJAX
+                                $.ajax({
+                                    url: wpkanban.ajax_url,
+                                    type: 'POST',
+                                    data: {
+                                        action: 'wpkanban_update_lead_stage',
+                                        lead_id: leadId,
+                                        stage_id: stageId,
+                                        nonce: wpkanban.nonce
+                                    },
+                                    success: function(response) {
+                                        if (response.success) {
+                                            showNotification('success', wpkanban.strings.lead_moved);
+                                            updateColumnCounters();
+                                        } else {
+                                            if (ui.sender) {
+                                                $(ui.sender).sortable('cancel');
+                                            }
+                                            showNotification('error', response.data.message || wpkanban.strings.error);
+                                            updateColumnCounters();
+                                        }
+                                    },
+                                    error: function() {
+                                        if (ui.sender) {
+                                            $(ui.sender).sortable('cancel');
+                                        }
+                                        showNotification('error', wpkanban.strings.error);
+                                        updateColumnCounters();
+                                    }
+                                });
+                            }
+                        }
+                    }).disableSelection();
                 }
+            },
+            complete: function() {
+                $column.removeClass('is-loading');
+                updateColumnCounters();
             }
         });
     }
-    
+
     // Função para atualizar todas as colunas
     function refreshAllColumns() {
         $('.wpkanban-column').each(function() {
             refreshColumn($(this));
         });
+        restartRefreshTimer();
     }
-    
-    // Iniciar atualização automática
-    const refreshInterval = wpkanban.refresh_interval * 1000; // converter para milissegundos
-    if (refreshInterval > 0) {
-        setInterval(refreshAllColumns, refreshInterval);
+
+    // Função para reiniciar o timer
+    function restartRefreshTimer() {
+        clearTimeout(refreshTimer);
+        refreshTimer = setTimeout(refreshAllColumns, refreshInterval);
     }
+
+    // Iniciar o timer quando o documento carregar
+    $(document).ready(function() {
+        restartRefreshTimer();
+    });
+
+    // Adicionar auto-reload das listas
+    var reloadInterval = wpkanbanSettings.intervalo * 1000; // Converte para milissegundos
+
+    function reloadLists() {
+        console.log('Iniciando requisição AJAX para atualizar listas...');
+        $.ajax({
+            url: wpkanbanSettings.ajax_url, // Verifique se esta URL está correta
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'wpkanban_get_updated_lists', // Certifique-se de que esta ação está registrada no servidor
+                nonce: wpkanbanSettings.nonce // Nonce para segurança
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Atualiza o DOM com os dados recebidos
+                    $('#kanban-board').html(response.data.html);
+                    console.log('Listas atualizadas com sucesso!', response);
+                } else {
+                    console.error('Erro ao atualizar as listas:', response.data.message);
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.error('Erro na requisição AJAX:', textStatus, errorThrown);
+            }
+        });
+    }
+
+    // Configura o auto-reload das listas
+    setInterval(reloadLists, reloadInterval);
+
+    // Função para atualizar uma lista específica
+    function reloadList(termId) {
+        console.log('Atualizando lista para o termo:', termId);
+        $.ajax({
+            url: wpkanbanSettings.ajax_url,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                action: 'wpkanban_get_updated_list',
+                term_id: termId, // Passa o ID do termo para o servidor
+                nonce: wpkanbanSettings.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Atualiza o DOM da lista específica
+                    $('#list-' + termId).html(response.data.html);
+                    console.log('Lista atualizada com sucesso para o termo:', termId);
+                } else {
+                    console.error('Erro ao atualizar a lista para o termo:', termId, response.data.message);
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.error('Erro na requisição AJAX para o termo:', termId, textStatus, errorThrown);
+            }
+        });
+    }
+
+    // Inicializa o auto-reload para cada lista
+    $('.kanban-list').each(function() {
+        var termId = $(this).data('term-id'); // Supondo que cada lista tenha um data attribute com o ID do termo
+        setInterval(function() {
+            reloadList(termId);
+        }, 20000); // Atualiza a cada 20 segundos
+    });
 
     // Inicialização
     updateColumnCounters();

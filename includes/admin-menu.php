@@ -90,6 +90,13 @@ function wpkanban_admin_enqueue_scripts($hook) {
             'nonce' => wp_create_nonce('wpkanban_save_etapas_order')
         ));
     }
+    
+    wp_enqueue_script('kanban-js', plugins_url('assets/js/kanban.js', __FILE__), array('jquery'), WPKANBAN_VERSION, true);
+    wp_localize_script('kanban-js', 'wpkanbanSettings', array(
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('wpkanban_nonce'),
+        'intervalo' => get_option('wpkanban_refresh_interval', 20) // Valor padrão de 20 segundos
+    ));
 }
 add_action('admin_enqueue_scripts', 'wpkanban_admin_enqueue_scripts');
 
